@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
+  <defs>
+    <marker id="yx-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#8aa2c8"/>
+    </marker>
+  </defs>
+
+  <!-- work item card -->
+  <rect x="44" y="84" width="168" height="108" rx="12" fill="#2f6bff" fill-opacity="0.10" stroke="#2f6bff" stroke-width="2.5"/>
+  <rect x="64" y="108" width="96" height="10" rx="5" fill="#2f6bff" fill-opacity="0.55"/>
+  <rect x="64" y="130" width="128" height="8" rx="4" fill="#2f6bff" fill-opacity="0.28"/>
+  <rect x="64" y="148" width="76" height="8" rx="4" fill="#2f6bff" fill-opacity="0.28"/>
+  <circle cx="72" cy="174" r="5" fill="#f08a24"/>
+  <circle cx="88" cy="174" r="5" fill="#1f9d8f"/>
+  <rect x="102" y="170" width="46" height="8" rx="4" fill="#2f6bff" fill-opacity="0.28"/>
+
+  <line x1="216" y1="138" x2="242" y2="138" stroke="#8aa2c8" stroke-width="2.5" marker-end="url(#yx-arrow)"/>
+
+  <!-- branch -->
+  <line x1="286" y1="74" x2="286" y2="202" stroke="#c7d4ea" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="286" cy="108" r="7" fill="#f08a24"/>
+  <circle cx="286" cy="168" r="7" fill="#1f9d8f"/>
+  <line x1="292" y1="108" x2="342" y2="108" stroke="#c7d4ea" stroke-width="3" stroke-linecap="round"/>
+  <line x1="292" y1="168" x2="342" y2="168" stroke="#c7d4ea" stroke-width="3" stroke-linecap="round"/>
+  <line x1="342" y1="108" x2="386" y2="138" stroke="#8aa2c8" stroke-width="2.5" marker-end="url(#yx-arrow)"/>
+  <line x1="342" y1="168" x2="386" y2="138" stroke="#8aa2c8" stroke-width="2.5" marker-end="url(#yx-arrow)"/>
+
+  <!-- merge request card -->
+  <rect x="416" y="84" width="180" height="108" rx="12" fill="#f08a24" fill-opacity="0.10" stroke="#f08a24" stroke-width="2.5"/>
+  <path d="M456 110 v20 c0 9 6 14 15 14 h8" fill="none" stroke="#f08a24" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M508 110 v20 c0 9-6 14-15 14 h-8" fill="none" stroke="#1f9d8f" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="456" cy="106" r="6" fill="#f08a24"/>
+  <circle cx="508" cy="106" r="6" fill="#1f9d8f"/>
+  <circle cx="482" cy="148" r="7" fill="#2f6bff"/>
+  <rect x="456" y="166" width="100" height="8" rx="4" fill="#f08a24" fill-opacity="0.35"/>
+
+  <!-- pipeline -->
+  <line x1="120" y1="246" x2="250" y2="246" stroke="#2f6bff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="250" y1="246" x2="390" y2="246" stroke="#f08a24" stroke-width="3" stroke-linecap="round"/>
+  <line x1="390" y1="246" x2="520" y2="246" stroke="#1f9d8f" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="120" cy="246" r="10" fill="#2f6bff"/>
+  <circle cx="250" cy="246" r="10" fill="#ffffff" stroke="#f08a24" stroke-width="3.5"/>
+  <circle cx="390" cy="246" r="10" fill="#f08a24"/>
+  <circle cx="520" cy="246" r="10" fill="#ffffff" stroke="#1f9d8f" stroke-width="3.5"/>
+  <path d="M332 241 l12 7 l-12 7 Z" fill="#ffffff"/>
+</svg>

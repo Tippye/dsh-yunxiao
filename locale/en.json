@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Yunxiao",
+    "description": "Adds a Yunxiao (云效) panel above the workspace list for work items, Codeup repositories, merge requests and Flow pipelines, plus yunxiao_* agent tools that share the same operations. Configure the personal access token and endpoint in the panel's Settings tab; the token goes to the DSH credentials store and nothing is read from files. Every call runs with the token owner's permissions.",
+    "detail": "docs/DETAIL.md"
+  }
+}

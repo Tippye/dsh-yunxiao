@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "云效 Yunxiao",
+    "description": "在工作区列表上方新增「云效」面板：工作项、Codeup 代码库、合并请求与 Flow 流水线，另有共享同一套实现的 yunxiao_* 工具。令牌与 API 地址在面板「设置」页配置，令牌写入 DSH 凭据库，不读取任何配置文件。所有调用以令牌所属账号的权限直接作用于线上云效。",
+    "detail": "docs/DETAIL.zh.md"
+  }
+}

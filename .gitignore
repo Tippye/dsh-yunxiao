@@ -1,0 +1,10 @@
+node_modules/
+coverage/
+.DS_Store
+.env
+.env.*
+.codeupkey
+*.pem
+*.key
+*.log
+*.tgz
