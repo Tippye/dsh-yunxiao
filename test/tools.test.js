@@ -270,6 +270,41 @@ test('the panel route and the tool share one implementation', async () => {
   }
 });
 
+test('work item creation shares the panel and Agent payload and validates before writing', async () => {
+  const { runAction } = await import('../index.js');
+  const h = harness({ responses: { any: jsonResponse({ id: 'new-item' }) } });
+  const input = { spaceId: 'project-1', workitemTypeId: 'task-type', subject: '  Example task  ' };
+  try {
+    await assert.rejects(runAction(h.service, { action: 'createWorkItem', ...input, subject: ' ' }), /subject is required/);
+    assert.equal(h.calls.length, 0);
+    assert.deepEqual(await runAction(h.service, { action: 'createWorkItem', ...input }), { id: 'new-item' });
+    const panel = h.calls.at(-1);
+    assert.equal(panel.method, 'POST');
+    assert.match(panel.url, /\/organizations\/org-1\/workitems$/);
+    assert.deepEqual(JSON.parse(panel.body), { spaceId: 'project-1', workitemTypeId: 'task-type', subject: 'Example task', assignedTo: 'user-1', formatType: 'MARKDOWN' });
+    await h.tools.get('yunxiao_create_work_item').execute(input);
+    assert.deepEqual(h.calls.at(-1), panel);
+  } finally {
+    h.restore();
+  }
+});
+
+test('assignee suggestions use the user id instead of the organization member id', async () => {
+  const { runAction } = await import('../index.js');
+  const h = harness({ responder: url => url.endsWith('/members:search')
+    ? jsonResponse([{ id: 'member-1', userId: 'user-2', name: 'Example' }, { id: 'member-only' }]) : undefined });
+  try {
+    const result = await runAction(h.service, { action: 'searchAssignees', query: ' Example ' });
+    assert.deepEqual(result, { items: [{ id: 'user-2', name: 'Example' }] });
+    const call = h.calls.at(-1);
+    assert.match(call.url, /\/platform\/organizations\/org-1\/members:search$/);
+    assert.equal(call.method, 'POST');
+    assert.deepEqual(JSON.parse(call.body), { page: 1, perPage: 20, query: 'Example', statuses: ['ENABLED'] });
+  } finally {
+    h.restore();
+  }
+});
+
 test('tool results are normalized to lossless JSON', async () => {
   const { toLossless } = await import('../index.js');
   assert.deepEqual(toLossless({ a: undefined, b: [undefined, 1], c: null }), { b: [null, 1], c: null });
@@ -336,6 +371,34 @@ test('an unknown status name lists the valid workflow statuses', async () => {
   });
   try {
     await assert.rejects(() => h.service.updateWorkItem('w1', { status: '处理中' }), /Unknown work item status "处理中".*开发中/);
+  } finally {
+    h.restore();
+  }
+});
+
+
+test('reads paginated comments and unpacks wrapped responses', async () => {
+  const comment = { id: 'c1', content: 'Example', user: { name: 'Demo' }, gmtCreate: 1750000000000 };
+  const h = harness({ responses: { any: jsonResponse({ result: [comment] }, { 'x-page': '2', 'x-total': '25' }) } });
+  try {
+    const result = await h.tools.get('yunxiao_list_work_item_comments').execute({ workItemId: 'w1', page: 2, perPage: 10 });
+    assert.deepEqual(result.items, [comment]);
+    assert.equal(result.pagination.total, 25);
+    assert.match(h.calls.at(-1).url, /\/workitems\/w1\/comments\?page=2&perPage=10$/);
+  } finally {
+    h.restore();
+  }
+});
+
+test('reads a specific relationship type without writing to Yunxiao', async () => {
+  const relation = { id: 'r1', resourceId: 'w2', resourceType: 'Task', relationType: 'SUB' };
+  const h = harness({ responses: { any: jsonResponse([relation]) } });
+  try {
+    const result = await h.tools.get('yunxiao_list_work_item_relations').execute({ workItemId: 'w1', relationType: 'SUB' });
+    assert.deepEqual(result.items, [relation]);
+    assert.match(h.calls.at(-1).url, /\/workitems\/w1\/relationRecords\?relationType=SUB$/);
+    assert.equal(h.calls.at(-1).method, 'GET');
+    await assert.rejects(h.service.listWorkItemRelations({ workItemId: 'w1', relationType: 'INVALID' }), /Invalid relationType/);
   } finally {
     h.restore();
   }

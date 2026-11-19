@@ -13,6 +13,7 @@
 import { createYunxiao } from './lib/client.js';
 import { createService } from './lib/service.js';
 import { createTools } from './lib/tools.js';
+import { createOfficial } from './lib/official.js';
 
 export const inject = ['tools', 'storageDomain', 'connection'];
 
@@ -65,6 +66,7 @@ export async function apply(ctx, config) {
 
   const yunxiao = createYunxiao({ ctx, config, settingsStore });
   const service = createService(yunxiao, { settingsStore });
+  const official = createOfficial(yunxiao);
 
   // One-time import for profiles that still point at a KEY=VALUE credentials file.
   // The secret moves into the credentials store; nothing else reads that file.
@@ -87,7 +89,7 @@ export async function apply(ctx, config) {
 
   ctx.provide('yunxiao', service);
 
-  for (const definition of createTools(yunxiao, service)) {
+  for (const definition of createTools(yunxiao, service, official)) {
     const execute = definition.execute;
     const tool = {
       ...definition,
@@ -107,12 +109,21 @@ export async function apply(ctx, config) {
         const raw = await request.text();
         if (raw.length > 262_144) return Response.json({ ok: false, error: { code: 'TOO_LARGE', message: 'Request exceeds 256 KiB.' } }, { status: 413 });
         const input = JSON.parse(raw || '{}');
-        const value = await runAction(service, input);
+        let value = input?.action === 'officialRead'
+          ? await official.call(input, { readOnly: true })
+          : await runAction(service, input);
+        if (value?.errorStatus === 401 || value?.errorStatus === 403) {
+          value = { ...value, error: value.errorStatus === 403 ? 'Permission denied.' : 'Authentication failed.' };
+        }
         return Response.json({ ok: true, value }, { headers: { 'Cache-Control': 'no-store' } });
       } catch (error) {
-        const code = error?.code ?? 'INVALID_REQUEST';
-        const status = code === 'NOT_FOUND' ? 404 : code === 'NO_TOKEN' ? 400 : code === 'NOT_RESOLVED' ? 400 : error?.status === 401 ? 401 : 400;
-        return Response.json({ ok: false, error: { code, message: error?.message ?? String(error) } }, { status, headers: { 'Cache-Control': 'no-store' } });
+        const upstreamStatus = error?.status;
+        const code = upstreamStatus === 403 ? 'FORBIDDEN' : upstreamStatus === 401 ? 'UNAUTHORIZED' : (error?.code ?? 'INVALID_REQUEST');
+        const status = Number.isInteger(upstreamStatus) && upstreamStatus >= 400 && upstreamStatus <= 599
+          ? upstreamStatus
+          : code === 'NOT_FOUND' ? 404 : 400;
+        const message = code === 'FORBIDDEN' ? 'Permission denied.' : code === 'UNAUTHORIZED' ? 'Authentication failed.' : (error?.message ?? String(error));
+        return Response.json({ ok: false, error: { code, message } }, { status, headers: { 'Cache-Control': 'no-store' } });
       }
     },
   });
@@ -129,7 +140,7 @@ export async function apply(ctx, config) {
   }
 }
 
-async function runAction(service, input) {
+export async function runAction(service, input) {
   const action = input?.action;
   switch (action) {
     case 'status':
@@ -152,12 +163,27 @@ async function runAction(service, input) {
       return service.searchWorkItems(input);
     case 'workItem':
       return service.getWorkItem(input.workItemId);
+    case 'workItemComments':
+      return service.listWorkItemComments(input);
+    case 'workItemRelations':
+      return service.listWorkItemRelations(input);
+    case 'searchAssignees':
+      return service.searchAssignees(input);
+    case 'createWorkItem':
+      return service.createWorkItem(input);
     case 'updateWorkItem':
       return service.updateWorkItem(input.workItemId, input);
     case 'comment':
       return service.addWorkItemComment(input.workItemId, input.content, input.formatType);
     case 'repositories':
       return service.listRepositories(input);
+    case 'createBranch':
+      return service.createBranch(input);
+    case 'createChangeRequest':
+      return service.createChangeRequest({ repositoryId: input.repositoryId, title: input.title, sourceBranch: input.sourceBranch,
+        targetBranch: input.targetBranch, description: input.description });
+    case 'commits':
+      return service.listCommits(input);
     case 'branches':
       return service.listBranches(input);
     case 'changeRequests':
@@ -166,6 +192,8 @@ async function runAction(service, input) {
       return service.getChangeRequest(input);
     case 'pipelines':
       return service.listPipelines(input);
+    case 'runPipeline':
+      return service.runPipeline({ pipelineId: input.pipelineId });
     case 'pipelineRun':
       return service.getPipelineRun(input);
     default: {
